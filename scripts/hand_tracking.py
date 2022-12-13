@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import math 
 import cv2 as cv
 import numpy as np
@@ -159,6 +160,7 @@ class handDetector():
             for i in range(len(self.fingers)):
                 if self.fingers[i] == 1:
                     self.countFingers += 1
-        
+            print("ok")
             return self.side + " -> " + str(self.countFingers)
+        print(self.side + " -> " + str(self.countFingers))
         

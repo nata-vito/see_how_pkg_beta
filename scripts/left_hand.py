@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+import rospy
 import cv2 as cv
 import pub_see_how as Pub
 import hand_tracking as ht
@@ -14,7 +16,7 @@ def videoCapture():
     if(cap.isOpened() == False):
         print("Error openning the video")
 
-    while(cap.isOpened()):
+    while(cap.isOpened() and not rospy.is_shutdown()):
         
         success, frame  = cap.read()
 
@@ -22,14 +24,17 @@ def videoCapture():
         frame = cv.flip(frame,1)
 
         # Hand's contour
-        contour         = tracking.findHands(frame, op='Right') # OP select the hand to detect
+        contour         = tracking.findHands(frame, op='Left') # OP select the hand to detect
         i              += 1 
 
         level = tracking.levelOutput(frame)
         
         if level:
             print(level)
-
+            
+        num = tracking.labelText()            
+        print(num)
+        
         if success:
             font     = cv.FONT_HERSHEY_COMPLEX
             left     = (50,50)
@@ -42,14 +47,17 @@ def videoCapture():
                 if tracking.label == 'Left':
                     
                     # Pub Here
-                    """ pub = Pub.Publisher(tracking.mpHands, tracking.hands, tracking.mpDraw, 
+                    pub = Pub.Publisher(tracking.mpHands, tracking.hands, tracking.mpDraw, 
                                         tracking.handFingers, tracking.fingers, tracking.side, 
-                                        tracking.countFingers) """
+                                        tracking.countFingers, "Left")
+                    pub.talker()
 
-                    cv.putText(frame, tracking.labelText(), left, font, 1, (255,0,0), 2)
+                    print("ok")
+                    
+                    cv.putText(frame, num, left, font, 1, (255,0,0), 2)
                     cv.putText(frame, level, leftSt, font, 1, (255,0,0), 2)
                 else:
-                     cv.putText(frame, tracking.labelText(), right, font, 1, (255,0,0), 2)
+                     cv.putText(frame, num, right, font, 1, (255,0,0), 2)
                      cv.putText(frame, level, rightSt, font, 1, (255,0,0), 2)
 
             cv.imshow('Frame', frame)
@@ -70,4 +78,7 @@ def videoCapture():
 
 
 if __name__ == '__main__':
-    videoCapture()
+    try:
+        videoCapture()
+    except rospy.ROSInterruptException:
+            pass
