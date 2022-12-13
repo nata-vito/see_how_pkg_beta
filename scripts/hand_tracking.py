@@ -6,7 +6,7 @@ import mediapipe as mp
 
 class handDetector():
     # Parameters
-    def __init__(self, mode=False, maxHands=2, modelComplexity=1, detectionCon=0.5, trackCon=0.5):
+    def __init__(self, mode=False, maxHands=1, modelComplexity=1, detectionCon=0.5, trackCon=0.5, op = ''):
         # To video streal False, any image true
         self.mode               = mode     
 
@@ -31,15 +31,26 @@ class handDetector():
         self.fingers            = [] # To storing fingers
         self.side               = "" # Right/Left
         self.countFingers       = 0
+
+        self.ids                = [4, 8, 12, 16, 20]
+
+        self.op                 = "" # To define what is the correct hant to detect
         
     # To find hands in video
-    def findHands(self, img, draw=True):
-        imgRGB = cv.cvtColor(img, cv.COLOR_BGR2RGB)
-        self.results = self.hands.process(imgRGB)
+    def findHands(self, img, op = "", draw=True):
+        imgRGB              = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+        self.results        = self.hands.process(imgRGB)
+        
+        self.op             = op
 
-        if self.results.multi_hand_landmarks:
-            for handLms in self.results.multi_hand_landmarks:
-                if draw: self.mpDraw.draw_landmarks(img, handLms, self.mpHands.HAND_CONNECTIONS)
+        self.findPosition(img)
+        
+        if self.side and self.op:
+            if self.results.multi_hand_landmarks:
+                for handLms in self.results.multi_hand_landmarks:
+
+                    #Drawing Landmarks
+                    if draw: self.mpDraw.draw_landmarks(img, handLms, self.mpHands.HAND_CONNECTIONS)
 
         return img
 
@@ -53,23 +64,29 @@ class handDetector():
             # Hand Labeling
             for id, hand_handedness in enumerate(self.results.multi_handedness):
                 self.label = hand_handedness.classification[0].label
+    
+            if self.label and self.op:
+                for id, lm in enumerate(myHand.landmark):
+                    h, w, c = img.shape
+                    cx, cy = int(lm.x * w), int(lm.y * h)
+                    self.lmList.append([id, cx, cy])
+                        
+                    
+                    # Drawing blue points
+                    if draw: cv.circle(img, (cx, cy), 5, (255, 0, 0), cv.FILLED)
 
-            for id, lm in enumerate(myHand.landmark):
-                h, w, c = img.shape
-                cx, cy = int(lm.x * w), int(lm.y * h)
-                self.lmList.append([id, cx, cy])
-
-                if draw: cv.circle(img, (cx, cy), 5, (255, 0, 0), cv.FILLED)
+        self.handsLabel(self.lmList, self.ids)
             
         return self.lmList
 
+    # Getting the level output
     def levelOutput(self, frame):
 
         if len(self.lmList) != 0:
             #print(self.lmList[4], self.lmList[8])
 
-            x1, y1 = self.lmList[4][1], self.lmList[4][2]                             # Thumb tip cicle
-            x2, y2 = self.lmList[8][1], self.lmList[8][2]                             # Index tip circle
+            x1, y1 = self.lmList[4][1], self.lmList[4][2]               # Thumb tip circle
+            x2, y2 = self.lmList[8][1], self.lmList[8][2]               # Index tip circle
             cx, cy = (x1 + x2) // 2, (y1 + y2) //2                      # Middle circle
 
             cv.circle(frame, (x1, y1), 10, (255, 0, 255), cv.FILLED)
@@ -88,10 +105,10 @@ class handDetector():
     # Transforming list in a string
     def deconstructionHand(self):
         self.handFingers = ""
-        if self.label == "Left" or self.label == "Right":
+        if self.label and self.op:
             for i in range(len(self.fingers)):
                 self.handFingers += str(self.fingers[i])
-        return self.handFingers
+            return self.handFingers
 
     # Find the positional hand's side
     def handsLabel(self, pose, ids):
@@ -102,27 +119,26 @@ class handDetector():
         if len(pose) != 0:
             
             # Finding the hand's label
-            if self.label == 'Left':
+            if self.label and self.op:
                 # hand Thumb -> Left
-                if pose[ids[0]][1] > pose[ids[0] - 1][1]:
+                if pose[ids[0]][1] > pose[ids[0] - 1][1] and self.op == "Left":
                         self.fingers.append(1)
-                else: 
-                    self.fingers.append(0)
-
-            elif self.label == 'Right':
-                # hand Thumb -> Right
-                if pose[ids[0]][1] < pose[ids[0] - 1][1]:
-                        self.fingers.append(1)
-                else: 
-                    self.fingers.append(0)
-
-            # 4 Fingers
-            for id in range(1, 5):
-                # Check finger reference points to define hand is open or not
-                if pose[ids[id]][2] < pose[ids[id] - 2][2]:
+                        
+                # hand thumb -> Right
+                elif pose[ids[0]][1] < pose[ids[0] - 1][1] and self.op == "Right":
+                    print('ok')
                     self.fingers.append(1)
+                    
                 else: 
                     self.fingers.append(0)
+
+                # 4 Fingers
+                for id in range(1, 5):
+                    # Check finger reference points to define hand is open or not
+                    if pose[ids[id]][2] < pose[ids[id] - 2][2]:
+                        self.fingers.append(1)
+                    else: 
+                        self.fingers.append(0)
             
             print(self.label, self.fingers)
 
@@ -139,9 +155,10 @@ class handDetector():
     def labelText(self):
         self.countFingers = 0
 
-        for i in range(len(self.fingers)):
-            if self.fingers[i] == 1:
-                self.countFingers += 1
+        if self.side == self.op:
+            for i in range(len(self.fingers)):
+                if self.fingers[i] == 1:
+                    self.countFingers += 1
         
-        return self.side + " -> " + str(self.countFingers)
+            return self.side + " -> " + str(self.countFingers)
         
