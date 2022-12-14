@@ -47,11 +47,13 @@ def videoCapture():
                 if tracking.label == 'Left':
                     
                     # Pub Here
-                    pub = Pub.Publisher(tracking.mpHands, tracking.hands, tracking.mpDraw, 
-                                        tracking.handFingers, tracking.fingers, tracking.side, 
-                                        tracking.countFingers, "Left")
+                    pub = Pub.Publisher(tracking.fingers, tracking.side, 
+                                        tracking.countFingers, tracking.op)
                     pub.talker()
-
+                    
+                    print(tracking.mpHands)
+                    print(tracking.hands)
+                    
                     print("ok")
                     
                     cv.putText(frame, num, left, font, 1, (255,0,0), 2)
