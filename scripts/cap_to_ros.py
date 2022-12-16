@@ -5,6 +5,7 @@ import rospy
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
+# Video capture -> webcam
 cap = cv2.VideoCapture(0)
 
 # Verifying the camera input 
@@ -13,7 +14,7 @@ print(cap.isOpened())
 # CvBridge to work with ROS
 bridge = CvBridge()
 
-
+# Publishing Camera Image in /camera ROS Topic
 def talker():
     pub = rospy.Publisher('/camera', Image, queue_size = 1)
     rospy.init_node('image', anonymous=True)
