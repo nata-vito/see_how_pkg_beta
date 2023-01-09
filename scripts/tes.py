@@ -8,3 +8,4 @@ while True:
     success, img = cap.read()
     cv2.imshow("Img", img)
     cv2.waitKey(1)
+    print('ok')
