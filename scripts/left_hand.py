@@ -30,10 +30,10 @@ def videoCapture():
         level = tracking.levelOutput(frame)
         
         if level:
-            print(level)
+            print(str(level) + "%")
             
         num = tracking.labelText()            
-        print(num)
+        #print(num + "%")
         
         if success:
             font     = cv.FONT_HERSHEY_COMPLEX
@@ -43,18 +43,18 @@ def videoCapture():
             rightSt  = (380, 80)
             level    = str(tracking.levelOutput(frame)) + '%'
 
-            if tracking.countFingers > 0:
+            if tracking.countFingers > -1:
                 if tracking.label == 'Left':
                     
                     # Pub Here
-                    pub = Pub.Publisher(tracking.fingers, tracking.side, 
+                    pub = Pub.Publisher(tracking.handFingers, tracking.side, 
                                         tracking.countFingers, tracking.op)
                     pub.talker()
                     
-                    print(tracking.mpHands)
+                    """ print(tracking.mpHands)
                     print(tracking.hands)
                     
-                    print("ok")
+                    print("ok") """
                     
                     cv.putText(frame, num, left, font, 1, (255,0,0), 2)
                     cv.putText(frame, level, leftSt, font, 1, (255,0,0), 2)
