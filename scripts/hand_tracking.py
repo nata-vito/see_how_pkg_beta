@@ -29,9 +29,9 @@ class handDetector():
         self.mpDraw             = mp.solutions.drawing_utils
 
         self.handFingers        = "0" # To transform list in a string
-        self.fingers            = [] # To storing fingers
-        self.side               = "" # Right/Left
-        self.countFingers       = 0
+        self.fingers            = 0   # To storing fingers
+        self.side               = ""  # Right/Left
+        self.countFingers       = -1
 
         self.ids                = [4, 8, 12, 16, 20]
 
@@ -146,6 +146,7 @@ class handDetector():
             # Decosntruction of List to String
             self.handFingers = self.deconstructionHand()
             self.side        = self.label
+            
 
     # Send data to api 
     """ def sendToApi(tracking):
@@ -154,13 +155,17 @@ class handDetector():
     """
 
     def labelText(self):
-        self.countFingers = 0
-
+        
         if self.side == self.op:
+            self.countFingers = 0
             for i in range(len(self.fingers)):
                 if self.fingers[i] == 1:
                     self.countFingers += 1
-            print("ok")
+            #print("ok")
+            
+            if self.countFingers == 0:
+                self.fingers = 00000
             return self.side + " -> " + str(self.countFingers)
+        
         print(self.side + " -> " + str(self.countFingers))
         
